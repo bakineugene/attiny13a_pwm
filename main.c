@@ -4,6 +4,10 @@
 #include <avr/eeprom.h>
 #include <util/delay.h>
 
+/*
+ * Code of "write" function is extracted from Alex Gyver repository
+ * https://github.com/GyverLibs/microLED/blob/main/src/tinyLED.h
+ */
 template<uint8_t PIN>
 void write(uint8_t data) {
     uint8_t oledSreg = SREG;
