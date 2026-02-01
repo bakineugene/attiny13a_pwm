@@ -35,14 +35,47 @@ const Color colors[9] PROGMEM = {
 #define COLOR_WHITE  7
 #define COLOR_BLACK  8
 
+volatile uint8_t adc_request = 0;
+
+static uint8_t adc_read_8bit(void)
+{
+    ADCSRA |= (1 << ADSC);              // start conversion
+    while (ADCSRA & (1 << ADSC));       // wait
+    return ADCH;                        // left-adjusted → 8 MSBs
+}
+
 ISR(PCINT0_vect) {
-    if (PINB_IS_HIGH(PB4)) {
+    if (!PINB_IS_HIGH(PB4)) {
+        adc_request = 1;
     }
 }
 
-volatile uint8_t color = 0;
 ISR(WDT_vect) {
-    if (++color > 8) color = 0;
+    // empty
+}
+
+#define KEY_NONE  0
+#define KEY_1     5
+#define KEY_2     15
+#define KEY_3     30
+#define KEY_4     45
+#define KEY_5     90
+
+volatile uint8_t menu[6] = {0, 1, 2, 3, 4, 5};
+volatile uint8_t menu_counter = 0;
+
+static void menu_key(uint8_t v) {
+    if (v < KEY_1) {
+        if (menu[menu_counter] < 8) ++menu[menu_counter];
+    } else if (v < KEY_2) {
+        if (menu_counter < 5) ++menu_counter;
+    } else if (v < KEY_3) {
+        if (menu_counter > 0) --menu_counter;
+    } else if (v < KEY_4) {
+        if (menu[menu_counter] > 0) --menu[menu_counter];
+    } else if (v < KEY_5) {
+
+    }
 }
 
 int main(void) {
@@ -57,17 +90,31 @@ int main(void) {
     PCINT0_ENABLE();
     PCINT0_ENABLE_PIN(PCINT4);
 
+    ADMUX =
+        (1 << ADLAR) |
+        (1 << MUX1);
+
+    ADCSRA =
+        (1 << ADEN)  |
+        (1 << ADPS2) |
+        (1 << ADPS1);
+
+    adc_read_8bit();
+
     sei();
 
     while (1) {
-
+        if (adc_request) {
+            adc_request = 0;
+            menu_key(adc_read_8bit());
+        }
         Color current_color;
-        pgm_read_block(&colors[color], (void*)&current_color, sizeof(Color));
+        pgm_read_block(&colors[menu_counter], (void*)&current_color, sizeof(Color));
 
         for (int i = 0; i < 8; ++i) {
-            write<2>(current_color.g);
-            write<2>(current_color.r);
-            write<2>(current_color.b);
+            write<2>(menu[menu_counter] <= i ? current_color.g : 0);
+            write<2>(menu[menu_counter] <= i ? current_color.r : 0);
+            write<2>(menu[menu_counter] <= i ? current_color.b : 0);
         }
         _delay_ms(100);
     }
