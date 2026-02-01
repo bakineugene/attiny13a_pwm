@@ -36,9 +36,9 @@ const Color colors[9] PROGMEM = {
 #define COLOR_BLACK  8
 
 ISR(PCINT0_vect) {
-    if (!(ADCSRA & (1 << ADSC) && !PINB_IS_HIGH(PB4))) {
+    if (!ADC_IS_RUNNING() && !PINB_IS_HIGH(PB4)) {
         _delay_ms(1);
-        ADCSRA |= (1 << ADSC);
+        ADC_START();
     }
 }
 
@@ -48,7 +48,7 @@ ISR(WDT_vect) {
 
 static void menu_key(uint8_t v);
 ISR(ADC_vect) {
-    if (!(ADCSRA & (1 << ADSC))) {
+    if (!ADC_IS_RUNNING()) {
       menu_key(ADCH);
     }
 }
@@ -89,17 +89,13 @@ int main(void) {
     PCINT0_ENABLE();
     PCINT0_ENABLE_PIN(PCINT4);
 
-    ADMUX =
-        (1 << ADLAR) |
-        (1 << MUX1);
+    ADC_8BIT_MODE();
+    ADC_SELECT_PB4();
 
-    ADCSRA =
-        (1 << ADEN)  |
-        (1 << ADPS2) |
-        (1 << ADPS1) |
-        (1 << ADIE);
-
-    ADCSRA |= (1 << ADSC);
+    ADC_ENABLE();
+    ADC_PRESCALER_64();
+    ADC_ENABLE_INTERRUPT();
+    ADC_START();
 
     sei();
 

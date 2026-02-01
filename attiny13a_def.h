@@ -41,6 +41,19 @@
 #define TIMER_0_EXTERNAL_FALLING()  TCCR0B = (1 << CS02) | (1 << CS01)
 #define TIMER_0_EXTERNAL_RISING()  TCCR0B = (1 << CS02) | (1 << CS01) | (1 << CS00)
 
+#define ADC_START()  (ADCSRA |= (1 << ADSC))
+#define ADC_IS_RUNNING() (ADCSRA & (1 << ADSC))
+#define ADC_ENABLE() (ADCSRA |= (1 << ADEN))
+#define ADC_ENABLE_INTERRUPT() (ADCSRA |= (1 << ADIE))
+#define ADC_PRESCALER_64() (ADCSRA |= (1 << ADPS2) | (1 << ADPS1))
+#define ADC_PRESCALER_128() (ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0))
+
+#define ADC_8BIT_MODE() ADMUX |= (1 << ADLAR)
+#define ADC_SELECT_PB2() ADMUX |= (1 << MUX0)
+#define ADC_SELECT_PB3() ADMUX |= (1 << MUX1) | (1 << MUX0)
+#define ADC_SELECT_PB4() ADMUX |= (1 << MUX1)
+#define ADC_SELECT_PB5() ADMUX |= 0
+
 #define UNDEFINED 0xFF
 
 static inline void pgm_read_block(const void *s, void *dest, uint8_t len) {
