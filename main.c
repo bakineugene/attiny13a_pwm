@@ -35,23 +35,22 @@ const Color colors[9] PROGMEM = {
 #define COLOR_WHITE  7
 #define COLOR_BLACK  8
 
-volatile uint8_t adc_request = 0;
-
-static uint8_t adc_read_8bit(void)
-{
-    ADCSRA |= (1 << ADSC);              // start conversion
-    while (ADCSRA & (1 << ADSC));       // wait
-    return ADCH;                        // left-adjusted → 8 MSBs
-}
-
 ISR(PCINT0_vect) {
-    if (!PINB_IS_HIGH(PB4)) {
-        adc_request = 1;
+    if (!(ADCSRA & (1 << ADSC) && !PINB_IS_HIGH(PB4))) {
+        _delay_ms(1);
+        ADCSRA |= (1 << ADSC);
     }
 }
 
 ISR(WDT_vect) {
     // empty
+}
+
+static void menu_key(uint8_t v);
+ISR(ADC_vect) {
+    if (!(ADCSRA & (1 << ADSC))) {
+      menu_key(ADCH);
+    }
 }
 
 #define KEY_NONE  0
@@ -97,17 +96,14 @@ int main(void) {
     ADCSRA =
         (1 << ADEN)  |
         (1 << ADPS2) |
-        (1 << ADPS1);
+        (1 << ADPS1) |
+        (1 << ADIE);
 
-    adc_read_8bit();
+    ADCSRA |= (1 << ADSC);
 
     sei();
 
     while (1) {
-        if (adc_request) {
-            adc_request = 0;
-            menu_key(adc_read_8bit());
-        }
         Color current_color;
         pgm_read_block(&colors[menu_counter], (void*)&current_color, sizeof(Color));
 
