@@ -4,8 +4,8 @@
 #include <avr/eeprom.h>
 #include <util/delay.h>
 
-#include "attiny13a_def.h"
-#include "attiny13a_9600khz_ws2812b.h"
+#include "./lib/attiny13a_def.h"
+#include "./lib/attiny13a_9600khz_ws2812b.h"
 
 typedef struct Color {
     uint8_t r;
